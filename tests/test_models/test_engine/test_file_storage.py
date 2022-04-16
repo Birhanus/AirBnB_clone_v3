@@ -113,3 +113,11 @@ class TestFileStorage(unittest.TestCase):
         with open("file.json", "r") as f:
             js = f.read()
         self.assertEqual(json.loads(string), json.loads(js))
+
+     @unittest.skipIf(models.storage_t == 'db', "not testing file storage")
+     def test_get(self):
+         """ test get function """
+         state = State(name='Alaska')
+         models.storage.new(state)
+         models.storage.save()
+         self.assertEqual(models.storage.get("State", state.id).id, state.id)
