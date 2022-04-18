@@ -23,6 +23,7 @@ def page_not_found(error):
     return (jsonify(error="Not found"), 404)
 
 
+
 @app.teardown_appcontext
 def teardown(exception=None):
     """
@@ -31,7 +32,13 @@ def teardown(exception=None):
     storage.close()
 
 
-if __name__ == '__main__':
-    h = getenv('HBNB_API_HOST')
-    p = getenv('HBNB_API_PORT')
-    app.run(host=h, port=p, threaded=True)
+if __name__ == "__main__":
+    """ Main Function """
+    host = environ.get('HBNB_API_HOST')
+    port = environ.get('HBNB_API_PORT')
+    if not host:
+        host = '0.0.0.0'
+    if not port:
+        port = '5000'
+    app.run(host=host, port=port, threaded=True)
+
