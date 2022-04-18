@@ -4,7 +4,7 @@
 from flask import Flask, Blueprint, make_response, jsonify
 from models import storage
 from api.v1.views import app_views
-from os
+import os
 from flask_cors import CORS
 
 app = Flask(__name__)
