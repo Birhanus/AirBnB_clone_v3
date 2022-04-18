@@ -54,31 +54,33 @@ class FileStorage:
                     self.__objects[keys] = Place(**decereal[keys])
                 elif decereal[keys]['__class__'] == "Review":
                     self.__objects[keys] = Review(**decereal[keys])
+
     def get(self, cls, id):
         """
             Returns the object based on the class name and its ID, or
             None if not found
         """
-        if cls not in classes.values():
-            return None
+        dic = self.__objects
+        for key in dic:
+            value = dic[key]
+            if (cls == value.__class__ or cls == value.__class__.__name__):
+                if (value.id == id):
+                    return (value)
+        return(None)
 
-        all_cls = models.storage.all(cls)
-        for value in all_cls.values():
-            if (value.id == id):
-                return value
-
-        return None
     def count(self, cls=None):
         """
         count the number of objects in storage
         """
-        all_class = classes.values()
-
+        count = 0
+        dic = self.__objects
         if not cls:
-            count = 0
-            for clas in all_class:
-                count += len(models.storage.all(clas).values())
+            for elem in dic:
+                count = count + 1
+            return (count)
         else:
-            count = len(models.storage.all(cls).values())
-
-        return count        
+            for key in dic:
+                value = dic[key]
+                if (cls == value.__class__ or cls == value.__class__.__name__):
+                    count = count + 1
+            return (count)
