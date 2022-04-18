@@ -1,44 +1,28 @@
 #!/usr/bin/python3
-"""
-A python script that starts a Flask web application
-"""
-from flask import Flask, Blueprint, abort, jsonify
+"""app.py to connect to API"""
+import os
 from models import storage
 from api.v1.views import app_views
-from os import getenv
+from flask import Flask, Blueprint, jsonify, make_response
 from flask_cors import CORS
 
 
 app = Flask(__name__)
-app.url_map.strict_slashes = False
 app.register_blueprint(app_views)
-CORS(app, resources={r"/*": {"origins": "0.0.0.0"}})
+cors = CORS(app, resources={"/*": {"origins": "0.0.0.0"}})
+
+
+@app.teardown_appcontext
+def teardown_appcontext(code):
+    """teardown_appcontext"""
+    storage.close()
 
 
 @app.errorhandler(404)
 def page_not_found(error):
-    """
-    Function that shows a 404 error
-    """
-    return (jsonify(error="Not found"), 404)
-
-
-
-@app.teardown_appcontext
-def teardown(exception=None):
-    """
-     Function closes the current session
-    """
-    storage.close()
+    return make_response(jsonify({'error': 'Not found'}), 404)
 
 
 if __name__ == "__main__":
-    """ Main Function """
-    host = environ.get('HBNB_API_HOST')
-    port = environ.get('HBNB_API_PORT')
-    if not host:
-        host = '0.0.0.0'
-    if not port:
-        port = '5000'
-    app.run(host=host, port=port, threaded=True)
-
+    app.run(host=os.getenv('HBNB_API_HOST', '0.0.0.0'),
+            port=int(os.getenv('HBNB_API_PORT', '5000')))
