@@ -1,74 +1,66 @@
 #!/usr/bin/python3
-""" State APIRest
-"""
+"""states.py"""
 
+from api.v1.views import app_views
+from flask import abort, jsonify, make_response, request
 from models import storage
 from models.state import State
-from api.v1.views import app_views
-from flask import jsonify, abort, request
 
 
-@app_views.route('/states', methods=['GET'])
-def list_dict():
-    """ list of an objetc in a dict form
-    """
-    lista = []
-    dic = storage.all('State')
-    for elem in dic:
-        lista.append(dic[elem].to_dict())
-    return (jsonify(lista))
+@app_views.route('/states', methods=['GET'], strict_slashes=False)
+def get_states():
+    """get state information for all states"""
+    states = []
+    for state in storage.all("State").values():
+        states.append(state.to_dict())
+    return jsonify(states)
 
 
-@app_views.route('/states/<state_id>', methods=['GET', 'DELETE'])
-def state_id(state_id):
-    """ realize the specific action depending on method
-    """
-    lista = []
-    dic = storage.all('State')
-    for elem in dic:
-        var = dic[elem].to_dict()
-        if var["id"] == state_id:
-            if request.method == 'GET':
-                return (jsonify(var))
-            elif request.method == 'DELETE':
-                aux = {}
-                dic[elem].delete()
-                storage.save()
-                return (jsonify(aux))
-    abort(404)
+@app_views.route('/states/<string:state_id>', methods=['GET'],
+                 strict_slashes=False)
+def get_state(state_id):
+    """get state information for specified state"""
+    state = storage.get("State", state_id)
+    if state is None:
+        abort(404)
+    return jsonify(state.to_dict())
 
 
-@app_views.route('/states', methods=['POST'])
-def add_item():
-    """ add a new item
-    """
-    if not request.json:
-        return jsonify("Not a JSON"), 400
-    else:
-        content = request.get_json()
-        if "name" not in content.keys():
-            return jsonify("Missing name"), 400
-        else:
-            new_state = State(**content)
-            new_state.save()
-            return (jsonify(new_state.to_dict()), 201)
+@app_views.route('/states/<string:state_id>', methods=['DELETE'],
+                 strict_slashes=False)
+def delete_state(state_id):
+    """deletes a state based on its state_id"""
+    state = storage.get("State", state_id)
+    if state is None:
+        abort(404)
+    state.delete()
+    storage.save()
+    return (jsonify({}))
 
 
-@app_views.route('/states/<state_id>', methods=['PUT'])
-def update_item(state_id):
-    """ update item
-    """
-    dic = storage.all("State")
-    for key in dic:
-        if dic[key].id == state_id:
-            if not request.json:
-                return jsonify("Not a JSON"), 400
-            else:
-                forbidden = ["id", "update_at", "created_at"]
-                content = request.get_json()
-                for k in content:
-                    if k not in forbidden:
-                        setattr(dic[key], k, content[k])
-                dic[key].save()
-                return(jsonify(dic[key].to_dict()))
-    abort(404)
+@app_views.route('/states/', methods=['POST'], strict_slashes=False)
+def post_state():
+    """create a new state"""
+    if not request.get_json():
+        return make_response(jsonify({'error': 'Not a JSON'}), 400)
+    if 'name' not in request.get_json():
+        return make_response(jsonify({'error': 'Missing name'}), 400)
+    state = State(**request.get_json())
+    state.save()
+    return make_response(jsonify(state.to_dict()), 201)
+
+
+@app_views.route('/states/<string:state_id>', methods=['PUT'],
+                 strict_slashes=False)
+def put_state(state_id):
+    """update a state"""
+    state = storage.get("State", state_id)
+    if state is None:
+        abort(404)
+    if not request.get_json():
+        return make_response(jsonify({'error': 'Not a JSON'}), 400)
+    for attr, val in request.get_json().items():
+        if attr not in ['id', 'created_at', 'updated_at']:
+            setattr(state, attr, val)
+    state.save()
+    return jsonify(state.to_dict())
